@@ -136,7 +136,7 @@ The number of observations in the combined dataset is `r nrow(combined_trash_whe
 ### Problem 3
 
 Import pols_month data. And clean up the data.
-Remove `prez_dem` and `prez_gop` and `day` variables
+Remove `day`, `prez_dem` and `prez_gop` variables
 ```{r}
 pols_month = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
   janitor::clean_names() %>% 
