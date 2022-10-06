@@ -1,0 +1,199 @@
+---
+title: "Homework 2 solutions"
+author: "Hongji Jiang"
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
+```
+
+### Due date
+
+Due: October 5 at 11:59pm. 
+
+### Points
+
+| Problem         | Points    |
+|:--------------- |:--------- |
+| Problem 0       | 20        |
+| Problem 1       | --        |
+| Problem 2       | 40        |
+| Problem 3       | 40        |
+| Optional survey | No points |
+
+
+### Problem 0
+
+This solution focuses on a reproducible report containing code and text necessary for Problems 1-3, and is organized as an R Project. This was not prepared as a GitHub repo; examples for repository structure and git commits should be familiar from other elements of the course.
+
+Throughout, we use appropriate text to describe our code and results, and use clear styling to ensure code is readable. 
+
+```{r load_libraries}
+library(tidyverse)
+library(readxl)
+library(lubridate)
+```
+
+
+### Problem 1rer
+
+Below we import and clean data from `NYC_Transit_Subway_Entrance_And_Exit_Data.csv`. The process begins with data import, updates variable names, and selects the columns that will be used in later parts fo this problem. We update `entry` from `yes` / `no` to a logical variable. As part of data import, we specify that `Route` columns 8-11 should be character for consistency with 1-7.
+
+```{r}
+trans_ent = 
+  read_csv(
+    "data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+    col_types = cols(Route8 = "c", Route9 = "c", Route10 = "c", Route11 = "c")) %>% 
+  janitor::clean_names() %>% 
+  select(
+    line, station_name, station_latitude, station_longitude, 
+    starts_with("route"), entry, exit_only, vending, entrance_type, 
+    ada) %>% 
+  mutate(entry = ifelse(entry == "YES", TRUE, FALSE))
+```
+
+As it stands, these data are not "tidy": route number should be a variable, as should route. That is, to obtain a tidy dataset we would need to convert `route` variables from wide to long format. This will be useful when focusing on specific routes, but may not be necessary when considering questions that focus on station-level variables. 
+
+The following code chunk selects station name and line, and then uses `distinct()` to obtain all unique combinations. As a result, the number of rows in this dataset is the number of unique stations.
+
+```{r}
+trans_ent %>% 
+  select(station_name, line) %>% 
+  distinct
+```
+
+The next code chunk is similar, but filters according to ADA compliance as an initial step. This produces a dataframe in which the number of rows is the number of ADA compliant stations. 
+
+```{r}
+trans_ent %>% 
+  filter(ada == TRUE) %>% 
+  select(station_name, line) %>% 
+  distinct
+```
+
+To compute the proportion of station entrances / exits without vending allow entrance, we first exclude station entrances that do not allow vending. Then, we focus on the `entry` variable -- this logical, so taking the mean will produce the desired proportion (recall that R will coerce logical to numeric in cases like this).
+
+```{r}
+trans_ent %>% 
+  filter(vending == "NO") %>% 
+  pull(entry) %>% 
+  mean
+```
+
+Lastly, we write a code chunk to identify stations that serve the A train, and to assess how many of these are ADA compliant. As a first step, we tidy the data as alluded to previously; that is, we convert `route` from wide to long format. After this step, we can use tools from previous parts of the question (filtering to focus on the A train, and on ADA compliance; selecting and using `distinct` to obtain dataframes with the required stations in rows).
+
+```{r}
+trans_ent %>% 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") %>% 
+  filter(route == "A") %>% 
+  select(station_name, line) %>% 
+  distinct
+
+trans_ent %>% 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") %>% 
+  filter(route == "A", ada == TRUE) %>% 
+  select(station_name, line) %>% 
+  distinct
+```
+
+
+
+### Problem 2
+
+```{r}
+trash_wheel = readxl::read_xlsx("./data/Trash Wheel Collection Data.xlsx",sheet = 1, range = "A2:N549") %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster) %>% 
+  mutate(
+      int_sports_balls = as.integer(sports_balls),
+      year = as.numeric(year)
+    )
+```
+
+```{r}
+professor_trash_wheel = readxl::read_xlsx("./data/Trash Wheel Collection Data.xlsx",sheet = 2, range = "A2:M96") %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster) 
+```
+
+```{r }
+#add a variable before combining the two datasets
+professor_trash_wheel = 
+  mutate(professor_trash_wheel, trash_wheel_person = "Professor Trash Wheel")
+trash_wheel= mutate(trash_wheel,
+  trash_wheel_person = "Mr.Trash Wheel" )
+#combining the two datasets
+combined_trash_wheel =
+  full_join(trash_wheel, professor_trash_wheel)
+```
+
+```{r}
+sum(professor_trash_wheel$weight_tons)
+combined_trash_wheel %>% 
+  filter(trash_wheel_person == "Professor Trash Wheel") %>% 
+  pull(weight_tons) %>%
+  sum()
+combined_trash_wheel %>% 
+  filter(trash_wheel_person == "Mr.Trash Wheel", year == 2020) %>% 
+  pull(int_sports_balls) %>%
+  sum()
+```
+
+The number of observations in the combined dataset is `r nrow(combined_trash_wheel)`. The key variable names are `r names(combined_trash_wheel)` The total weight of trash collected by Professor Trash Wheel was `r sum(professor_trash_wheel$weight_tons)` The total number of sports balls collected by Mr. Trash Wheel in 2020 is `r combined_trash_wheel %>% filter(trash_wheel_person == "Mr.Trash Wheel", year == 2020) %>% pull(int_sports_balls) %>% sum()`
+
+### Problem 3
+
+```{r}
+pols_month = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>% 
+  separate(col = mon, into = c('year','month','day'), sep = "-" , convert = TRUE) %>% 
+  mutate(
+
+     month = month.name[month],
+
+     president = recode(prez_dem, '0' = "gop", '1' = "dem")
+  ) %>% 
+  select (-day,-prez_gop,-prez_dem) 
+```
+
+```{r}
+snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>% 
+  separate(col = date, into =c ("month", "day", "year"), sep = "/", convert = TRUE) %>% 
+  mutate (month = month.name[month]) %>%
+  mutate (year = if_else(year<16, year +2000, year +1900)) %>%
+  select (-day) 
+```
+
+tidy the unemployment data
+```{r}
+unemployment = read_csv( "./data/fivethirtyeight_datasets/unemployment.csv" ) %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+  jan:dec,
+  names_to = "month",
+  values_to = "unemployment_rate" ) %>% 
+  mutate(
+     month = str_to_title(month)
+  ) 
+```
+
+```{r}
+joined_data =
+  left_join(pols_month, snp, by = c("year","month")) %>% 
+  left_join(unemployment, by = c("year","month"))
+```
+
+The dataset `pols_month` have `r nrow(pols_month)` observations(rows) and `r ncol(pols_month)` cols, and the variables are `r names(pols_month)`. The years are in the range between `r min(pols_month$year)` and `r max(pols_month$year)`.
+
+The dataset `snp` have `r nrow(snp)` observations(rows) and `r ncol(snp)` cols, and the variables are `r names(snp)`. The years are in the range between `r min(snp$year)` and `r max(snp$year)`.
+
+The dataset `snp` have `r nrow(unemployment)` observations(rows) and `r ncol(unemployment)` cols, and the variables are `r names(unemployment)`. The years are in the range between `r min(unemployment$year)` and `r max(unemployment$year)`.
