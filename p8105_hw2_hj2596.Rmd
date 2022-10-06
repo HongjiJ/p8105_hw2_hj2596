@@ -108,6 +108,8 @@ trans_ent %>%
 
 ### Problem 2
 
+Import and clean up trash_wheel.
+Created a new variable int_sports_balls for the integer number of sports balls.
 ```{r}
 trash_wheel = readxl::read_xlsx("./data/Trash Wheel Collection Data.xlsx",sheet = 1, range = "A2:N549") %>%
   janitor::clean_names() %>%
@@ -118,12 +120,14 @@ trash_wheel = readxl::read_xlsx("./data/Trash Wheel Collection Data.xlsx",sheet 
     )
 ```
 
+Import and clean up professor_trash_wheel.
 ```{r}
 professor_trash_wheel = readxl::read_xlsx("./data/Trash Wheel Collection Data.xlsx",sheet = 2, range = "A2:M96") %>%
   janitor::clean_names() %>%
   drop_na(dumpster) 
 ```
 
+Combing the two datasets above.
 ```{r }
 #add a variable before combining the two datasets
 professor_trash_wheel = 
@@ -135,8 +139,8 @@ combined_trash_wheel =
   full_join(trash_wheel, professor_trash_wheel)
 ```
 
+Calculate the total weight of trash collected by Professor Trash Wheel and the total number of sports balls collected by Mr. Trash Wheel in 2020.
 ```{r}
-sum(professor_trash_wheel$weight_tons)
 combined_trash_wheel %>% 
   filter(trash_wheel_person == "Professor Trash Wheel") %>% 
   pull(weight_tons) %>%
@@ -147,33 +151,34 @@ combined_trash_wheel %>%
   sum()
 ```
 
-The number of observations in the combined dataset is `r nrow(combined_trash_wheel)`. The key variable names are `r names(combined_trash_wheel)` The total weight of trash collected by Professor Trash Wheel was `r sum(professor_trash_wheel$weight_tons)` The total number of sports balls collected by Mr. Trash Wheel in 2020 is `r combined_trash_wheel %>% filter(trash_wheel_person == "Mr.Trash Wheel", year == 2020) %>% pull(int_sports_balls) %>% sum()`
+The number of observations in the combined dataset is `r nrow(combined_trash_wheel)`. The key variable names are `r names(combined_trash_wheel)`. The total weight of trash collected by Professor Trash Wheel was `r sum(professor_trash_wheel$weight_tons)` The total number of sports balls collected by Mr. Trash Wheel in 2020 is `r combined_trash_wheel %>% filter(trash_wheel_person == "Mr.Trash Wheel", year == 2020) %>% pull(int_sports_balls) %>% sum()`
 
 ### Problem 3
 
+Import pols_month data. And clean up the data.
 ```{r}
 pols_month = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
   janitor::clean_names() %>% 
   separate(col = mon, into = c('year','month','day'), sep = "-" , convert = TRUE) %>% 
   mutate(
-
-     month = month.name[month],
-
+     #change this to abb so that it has the same name with unemployment
+     month = month.abb[month],
      president = recode(prez_dem, '0' = "gop", '1' = "dem")
   ) %>% 
   select (-day,-prez_gop,-prez_dem) 
 ```
 
+Import snp data. And clean up the data.
 ```{r}
 snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
   janitor::clean_names() %>% 
   separate(col = date, into =c ("month", "day", "year"), sep = "/", convert = TRUE) %>% 
-  mutate (month = month.name[month]) %>%
+  mutate (month = month.abb[month]) %>%
   mutate (year = if_else(year<16, year +2000, year +1900)) %>%
   select (-day) 
 ```
 
-tidy the unemployment data
+Import unemployment data. And clean up the data.
 ```{r}
 unemployment = read_csv( "./data/fivethirtyeight_datasets/unemployment.csv" ) %>% 
   janitor::clean_names() %>% 
