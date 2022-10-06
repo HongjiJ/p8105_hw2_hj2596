@@ -1,28 +1,13 @@
 ---
-title: "Homework 2 solutions"
+title: "p8105_hw2_hj2596"
 author: "Hongji Jiang"
-date: '`r format(Sys.time(), "%Y-%m-%d")`'
+date: "2022-10-02"
 output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
 ```
-
-### Due date
-
-Due: October 5 at 11:59pm. 
-
-### Points
-
-| Problem         | Points    |
-|:--------------- |:--------- |
-| Problem 0       | 20        |
-| Problem 1       | --        |
-| Problem 2       | 40        |
-| Problem 3       | 40        |
-| Optional survey | No points |
-
 
 ### Problem 0
 
@@ -156,6 +141,7 @@ The number of observations in the combined dataset is `r nrow(combined_trash_whe
 ### Problem 3
 
 Import pols_month data. And clean up the data.
+Remove `prez_dem` and `prez_gop` and `day` variables
 ```{r}
 pols_month = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
   janitor::clean_names() %>% 
@@ -169,6 +155,7 @@ pols_month = read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
 ```
 
 Import snp data. And clean up the data.
+Remove the `day` variable.
 ```{r}
 snp = read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
   janitor::clean_names() %>% 
@@ -201,4 +188,6 @@ The dataset `pols_month` have `r nrow(pols_month)` observations(rows) and `r nco
 
 The dataset `snp` have `r nrow(snp)` observations(rows) and `r ncol(snp)` cols, and the variables are `r names(snp)`. The years are in the range between `r min(snp$year)` and `r max(snp$year)`.
 
-The dataset `snp` have `r nrow(unemployment)` observations(rows) and `r ncol(unemployment)` cols, and the variables are `r names(unemployment)`. The years are in the range between `r min(unemployment$year)` and `r max(unemployment$year)`.
+The dataset `unemployment` have `r nrow(unemployment)` observations(rows) and `r ncol(unemployment)` cols, and the variables are `r names(unemployment)`. The years are in the range between `r min(unemployment$year)` and `r max(unemployment$year)`.
+
+The dataset `joined_data` have `r nrow(joined_data)` observations(rows) and `r ncol(joined_data)` cols, and the variables are `r names(joined_data)`. The years are in the range between `r min(joined_data$year)` and `r max(joined_data$year)`.
